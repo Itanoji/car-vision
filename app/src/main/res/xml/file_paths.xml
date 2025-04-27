@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- разрешаем доступ к приватному internal storage/images/ -->
+    <files-path name="images" path="images/" />
+    <!-- разрешаем доступ к cache directory -->
+    <cache-path name="cache" path="." />
+    <!-- разрешаем доступ к external files directory -->
+    <external-files-path name="external_files" path="." />
+</paths>

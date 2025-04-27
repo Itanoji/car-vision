@@ -1,9 +1,11 @@
 package com.itanoji.carvision.ui.inspection.createInspection
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -21,13 +23,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.itanoji.carvision.R
 import com.itanoji.carvision.ui.theme.BlueOnPrimary
 import com.itanoji.carvision.ui.theme.BluePrimary
 import org.koin.androidx.compose.getViewModel
+import java.io.File
+import java.nio.file.Files.exists
 import java.util.UUID
 
 
@@ -42,15 +48,66 @@ fun CreateInspectionScreen(
     val previewFile by viewModel.previewFile.collectAsState()
     val tempCameraUri by viewModel.tempCameraUri.collectAsState()
 
+    val context = LocalContext.current
+    // 1) URI для камеры
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Один лончер для обоих — галереи и камеры
+    // 2) Лончер для результата от камеры/галереи
     val pickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            // либо data.data для галереи, либо tempCameraUri для камеры
-            val uri = result.data?.data ?: tempCameraUri
+            // Если из галереи: data.data != null, иначе — это наш cameraUri
+            val uri = result.data?.data ?: cameraUri
             uri?.let { viewModel.onImagePicked(it) }
+        }
+    }
+
+    // 3) Лончер для запроса разрешения CAMERA
+    val cameraPermLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // только после grant — формируем и запускаем chooser
+            // 3.1) Сгенерировать файл и Uri
+            val imagesDir = File(context.cacheDir, "images").apply { if (!exists()) mkdirs() }
+            val file = File(imagesDir, "avatar_${System.currentTimeMillis()}.jpg")
+            cameraUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+
+            // 3.2) Intent на галерею
+            val pickIntent = Intent(
+                Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ).apply {
+                type = "image/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            // 3.3) Intent на камеру
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            }
+
+            // 3.4) Chooser
+            val chooser = Intent.createChooser(pickIntent, "Выберите фото").apply {
+                putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(cameraIntent))
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            }
+
+            pickLauncher.launch(chooser)
+        } else {
+            Toast.makeText(context, "Без доступа к камере снять фото нельзя", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -108,42 +165,8 @@ fun CreateInspectionScreen(
             Spacer(Modifier.height(8.dp))
             // Кнопка "Редактировать" запускает галерею
             IconButton(onClick = {
-                // 1) Intent галереи
-                val pickIntent = Intent(
-                    Intent.ACTION_PICK,
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                ).apply {
-                    type = "image/*"
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-
-                // 2) Готовим URI для камеры в VM
-                viewModel.prepareCameraUri()
-
-                // 3) Intent камеры
-                val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                    // Ждем, пока URI будет готов
-                    tempCameraUri?.let { uri ->
-                        putExtra(MediaStore.EXTRA_OUTPUT, uri)
-                        addFlags(
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    }
-                }
-
-                // 4) Собираем chooser только если URI камеры готов
-                val chooser = if (tempCameraUri != null) {
-                    Intent.createChooser(pickIntent, "Выберите фото").apply {
-                        putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(cameraIntent))
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    }
-                } else {
-                    pickIntent
-                }
-
-                // 5) Ланчаем
-                pickLauncher.launch(chooser)
+                // Запрашиваем CAMERA permission
+                cameraPermLauncher.launch(Manifest.permission.CAMERA)
             }) {
                 Icon(Icons.Default.Edit, contentDescription = "Изменить фото")
             }

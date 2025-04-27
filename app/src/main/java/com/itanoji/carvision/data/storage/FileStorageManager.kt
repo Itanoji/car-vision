@@ -46,7 +46,7 @@ class FileStorageManager(private val context: Context) {
     /** Возвращает File по относительному пути или null, если не найден. */
     fun getImageFile(relativePath: String?): File? {
         if (relativePath.isNullOrBlank()) return null
-        val f = File(imagesDir, "/inspections/"+relativePath)
+        val f = File(imagesDir, relativePath)
         return f.takeIf { it.exists() }
     }
 
@@ -85,7 +85,7 @@ class FileStorageManager(private val context: Context) {
         }
 
         // 2) Делаем Uri через FileProvider
-        val authority = "${context.packageName}.fileprovider"
+        val authority = "${context.packageName}.provider"
         return FileProvider.getUriForFile(context, authority, imageFile)
     }
 

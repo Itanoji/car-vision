@@ -46,13 +46,10 @@ fun CreateInspectionScreen(
     val title       by viewModel.title.collectAsState()
     val comment     by viewModel.comment.collectAsState()
     val previewFile by viewModel.previewFile.collectAsState()
-    val tempCameraUri by viewModel.tempCameraUri.collectAsState()
-
     val context = LocalContext.current
-    // 1) URI для камеры
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    // 2) Лончер для результата от камеры/галереи
+
     val pickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -63,22 +60,22 @@ fun CreateInspectionScreen(
         }
     }
 
-    // 3) Лончер для запроса разрешения CAMERA
+    // Лончер для запроса разрешения CAMERA
     val cameraPermLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             // только после grant — формируем и запускаем chooser
-            // 3.1) Сгенерировать файл и Uri
+            // Сгенерировать файл и Uri
             val imagesDir = File(context.cacheDir, "images").apply { if (!exists()) mkdirs() }
-            val file = File(imagesDir, "avatar_${System.currentTimeMillis()}.jpg")
+            val file = File(imagesDir, "${UUID.randomUUID()}.jpg")
             cameraUri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.provider",
                 file
             )
 
-            // 3.2) Intent на галерею
+            // Intent на галерею
             val pickIntent = Intent(
                 Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -87,7 +84,7 @@ fun CreateInspectionScreen(
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            // 3.3) Intent на камеру
+            // Intent на камеру
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
                 putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
                 addFlags(
@@ -96,7 +93,7 @@ fun CreateInspectionScreen(
                 )
             }
 
-            // 3.4) Chooser
+            // Chooser
             val chooser = Intent.createChooser(pickIntent, "Выберите фото").apply {
                 putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(cameraIntent))
                 addFlags(

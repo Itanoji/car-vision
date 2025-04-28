@@ -30,10 +30,6 @@ class CreateInspectionViewModel(
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
 
-    // Временный URI, под который камера запишет файл
-    private val _tempCameraUri = MutableStateFlow<Uri?>(null)
-    val tempCameraUri: StateFlow<Uri?> = _tempCameraUri.asStateFlow()
-
     // Comment / description
     private val _comment = MutableStateFlow("")
     val comment: StateFlow<String> = _comment.asStateFlow()
@@ -63,19 +59,9 @@ class CreateInspectionViewModel(
                 _previewFile.value = fileStorage.getImageFile(relPath)
             } catch (e: IOException) {
                 Log.e("CreateInspectionVM", "Ошибка при загрузке изображения: ${e.message}")
-                // Можно отправить ошибку в UI через специальный StateFlow/Messages
             } catch (e: Exception) {
                 Log.e("CreateInspectionVM", "Неизвестная ошибка: ${e.message}")
-                // Аналогично можно обработать ошибку в UI
             }
-        }
-    }
-
-    fun prepareCameraUri() {
-        viewModelScope.launch {
-            val relPath = "inspections/${UUID.randomUUID()}.jpg"
-            val uri = fileStorage.createImageCaptureUri(relPath)
-            _tempCameraUri.value = uri
         }
     }
 
@@ -84,7 +70,7 @@ class CreateInspectionViewModel(
             // Собираем поля из state flows
             val t = title.value
             val c = comment.value
-            // 1) создаём запись без аватара
+            // создаём запись без аватара
             val newId = repo.insertInspection(
                 Inspection(
                     id = 0L,
@@ -94,7 +80,7 @@ class CreateInspectionViewModel(
                     avatarMediaId = null
                 )
             )
-            // 2) если есть выбранный локальный файл
+            // если есть выбранный локальный файл
             previewFile.value?.let { file ->
                 val mediaId = repo.saveMedia(
                     Media(
@@ -109,7 +95,7 @@ class CreateInspectionViewModel(
                     repo.updateInspection(it.copy(avatarMediaId = mediaId))
                 }
             }
-            // 3) сигналим успех
+            // сигналим успех
             _created.emit(Unit)
         }
     }

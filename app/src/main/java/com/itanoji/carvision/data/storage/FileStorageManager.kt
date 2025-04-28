@@ -16,17 +16,16 @@ import androidx.core.graphics.scale
 
 class FileStorageManager(private val context: Context) {
 
-    // Корневая папка для всех наших картинок
+    /**
+     * Корневая папка для кортинок
+     */
     private val imagesDir: File by lazy {
         File(context.filesDir, "images")
             .apply { if (!exists()) mkdirs() }
     }
 
-
-
     /**
      * Сохраняет Bitmap в файл в imagesDir/relativePath, возвращает этот относительный путь.
-     * Пример relativePath: "inspections/42/avatar.jpg"
      */
     suspend fun saveImage(
         relativePath: String,
@@ -56,40 +55,6 @@ class FileStorageManager(private val context: Context) {
     }
 
     /**
-     * Генерирует content:// Uri через FileProvider для передачи в Intent или Compose.
-     */
-    fun getImageContentUri(relativePath: String): android.net.Uri? {
-        return getImageFile(relativePath)?.let { file ->
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-        }
-    }
-
-    /**
-    * Создаёт Uri для запуска камеры через FileProvider.
-    * @param relativePath относительный путь внутри imagesDir, например "inspections/123/avatar.jpg"
-    * @return content:// Uri, на который камера сможет записать файл
-    */
-    fun createImageCaptureUri(relativePath: String): Uri {
-        // 1) Физический файл в private storage
-        val imageFile = File(imagesDir, relativePath).apply {
-            // убеждаемся, что родительские папки существуют
-            parentFile?.let { parent ->
-                if (!parent.exists()) parent.mkdirs()
-            }
-            // создаём сам файл, если нужно
-            if (!exists()) createNewFile()
-        }
-
-        // 2) Делаем Uri через FileProvider
-        val authority = "${context.packageName}.provider"
-        return FileProvider.getUriForFile(context, authority, imageFile)
-    }
-
-    /**
      * Загружает Bitmap из переданного галерейного Uri, масштабируя так,
      * чтобы ни ширина, ни высота не превышали maxSize px.
      *
@@ -103,14 +68,14 @@ class FileStorageManager(private val context: Context) {
     ): Bitmap = withContext(Dispatchers.IO) {
         val resolver = context.contentResolver
 
-        // 1) Сначала читаем только bounds, чтобы узнать исходные размеры
+        // Сначала читаем только bounds, чтобы узнать исходные размеры
         val optsBounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri).use { input ->
             BitmapFactory.decodeStream(input, null, optsBounds)
         }
         val (origW, origH) = optsBounds.outWidth to optsBounds.outHeight
 
-        // 2) Рассчитываем inSampleSize (степень деления сторон)
+        // Рассчитываем inSampleSize (степень деления сторон)
         var inSampleSize = 1
         val maxOrig = max(origW, origH)
         while (maxOrig / inSampleSize > maxSize) {
@@ -118,7 +83,7 @@ class FileStorageManager(private val context: Context) {
         }
 
 
-        // 3) Читаем уже реальный Bitmap с учётом inSampleSize
+        // Читаем уже реальный Bitmap с учётом inSampleSize
         val optsDecode = BitmapFactory.Options().apply {
             inJustDecodeBounds = false
             this.inSampleSize = inSampleSize
@@ -127,7 +92,7 @@ class FileStorageManager(private val context: Context) {
             BitmapFactory.decodeStream(input, null, optsDecode)
         } ?: throw java.io.IOException("Cannot decode bitmap from URI: $uri")
 
-        // 4) Если после subsampling размер всё ещё великоват, подмасштабируем точечно
+        // Если после subsampling размер всё ещё великоват, подмасштабируем точечно
         val scale = maxSize.toFloat() / max(bitmap.width, bitmap.height)
         if (scale < 1f) {
             val newW = (bitmap.width * scale).roundToInt()
@@ -137,7 +102,4 @@ class FileStorageManager(private val context: Context) {
             bitmap
         }
     }
-
-
-
 }

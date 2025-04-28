@@ -35,13 +35,14 @@ class InspectionsListViewModel(
 
     fun deleteInspection(inspection: Inspection) {
         viewModelScope.launch {
-            // 1) удаляем сам осмотр (каскадно уйдёт и результат, и связанное медиа-аватар)
-            inspectionRepo.deleteInspection(inspection)
-
+            //Сначала удалим медиа
             inspection.avatarMediaId?.let { mediaId ->
                 val media = inspectionRepo.getMediaById(mediaId).first()
                 fileStorage.deleteImage(media.filename)
             }
+
+            // удаляем сам осмотр (каскадно уйдёт и результат, и связанное медиа-аватар)
+            inspectionRepo.deleteInspection(inspection)
         }
     }
 

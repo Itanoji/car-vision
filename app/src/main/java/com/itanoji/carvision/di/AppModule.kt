@@ -1,11 +1,13 @@
 package com.itanoji.carvision.di
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.itanoji.carvision.data.local.AppDatabase
 import com.itanoji.carvision.data.repository.InspectionRepositoryImpl
 import com.itanoji.carvision.data.storage.FileStorageManager
 import com.itanoji.carvision.domain.repository.InspectionRepository
 import com.itanoji.carvision.ui.inspection.createInspection.CreateInspectionViewModel
+import com.itanoji.carvision.ui.inspection.inscpetionDetail.InspectionDetailViewModel
 import com.itanoji.carvision.ui.inspections.InspectionsListViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
@@ -48,6 +50,14 @@ val appModule = module {
         CreateInspectionViewModel(
             repo = get(),
             fileStorage = get()
+        )
+    }
+
+    viewModel {
+        InspectionDetailViewModel(
+            repository = get(),
+            fileStorage = get(),
+            savedStateHandle = get()
         )
     }
 }

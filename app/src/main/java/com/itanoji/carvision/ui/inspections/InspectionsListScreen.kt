@@ -1,5 +1,6 @@
 package com.itanoji.carvision.ui.inspections
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -45,6 +47,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.itanoji.carvision.R
 import kotlinx.coroutines.launch
@@ -174,7 +179,9 @@ fun InspectionCard(
                 contentDescription = null,
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(MaterialTheme.shapes.small)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.LightGray, CircleShape),
+                contentScale = ContentScale.Crop
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

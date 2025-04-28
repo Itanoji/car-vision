@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -160,6 +161,8 @@ fun CreateInspectionScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
+                    .align(Alignment.CenterHorizontally),
+                contentScale = ContentScale.Crop
             )
             Spacer(Modifier.height(8.dp))
             // Кнопка "Редактировать" запускает галерею

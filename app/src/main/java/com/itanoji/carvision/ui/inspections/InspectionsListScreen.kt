@@ -34,11 +34,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import coil.compose.AsyncImage
 import com.itanoji.carvision.R
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 import java.io.File
 
@@ -51,7 +60,15 @@ fun InspectionsListScreen(
 ) {
     val inspections = viewModel.inspections.collectAsState()
 
+    // 1) Храним тот осмотр, который пользователь хочет удалить
+    var inspectionToDelete by remember { mutableStateOf<Inspection?>(null) }
+
+    // 2) SnackbarHostState и scope для показа Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Список осмотров") },
@@ -89,11 +106,38 @@ fun InspectionsListScreen(
                     inspection = insp,
                     viewModel = viewModel,
                     onClick = { onNavigateToDetail(insp.id) },
-                    onDelete = { viewModel.deleteInspection(insp) }
+                    onDelete = { inspectionToDelete = insp }
                 )
             }
         }
     }
+    // 3) Диалог подтверждения удаления
+    inspectionToDelete?.let { toDelete ->
+        AlertDialog(
+            onDismissRequest = { inspectionToDelete = null },
+            title = { Text("Удалить осмотр?") },
+            text = { Text("Вы уверены, что хотите удалить осмотр \"${toDelete.title}\"?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    // вызываем реальное удаление
+                    viewModel.deleteInspection(toDelete)
+                    inspectionToDelete = null
+                    // показываем Snackbar
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Осмотр успешно удалён")
+                    }
+                }) {
+                    Text("Да")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { inspectionToDelete = null }) {
+                    Text("Нет")
+                }
+            }
+        )
+    }
+
 }
 
 @Composable

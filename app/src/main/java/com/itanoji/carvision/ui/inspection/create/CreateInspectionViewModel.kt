@@ -1,4 +1,4 @@
-package com.itanoji.carvision.ui.inspection.createInspection
+package com.itanoji.carvision.ui.inspection.create
 
 import android.net.Uri
 import android.util.Log
@@ -82,7 +82,7 @@ class CreateInspectionViewModel(
             )
             // если есть выбранный локальный файл
             previewFile.value?.let { file ->
-                val mediaId = repo.saveMedia(
+                val mediaId = repo.insertMedia(
                     Media(
                         id = 0L,
                         inspectionId = newId,

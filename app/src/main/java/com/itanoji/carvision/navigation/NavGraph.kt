@@ -6,8 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.itanoji.carvision.ui.inspection.createInspection.CreateInspectionScreen
-import com.itanoji.carvision.ui.inspection.inscpetionDetail.InspectionDetailScreen
+import com.itanoji.carvision.ui.inspection.create.CreateInspectionScreen
+import com.itanoji.carvision.ui.inspection.edit.EditInspectionScreen
+import com.itanoji.carvision.ui.inspection.view.InspectionDetailScreen
 import com.itanoji.carvision.ui.inspections.InspectionsListScreen
 import com.itanoji.carvision.ui.login.LoginScreen
 
@@ -15,7 +16,8 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object InspectionsList : Screen("inspections_list")
     object InspectionDetail : Screen("inspection_detail")
-    object CreateInspection: Screen("create_inspection")
+    object CreateInspection : Screen("create_inspection")
+    object EditInspection : Screen("edit_inspection")
     object Camera : Screen("camera")
 }
 
@@ -52,6 +54,20 @@ fun NavGraph(startDestination: String = Screen.InspectionsList.route) {
 
         composable(Screen.CreateInspection.route) {
             CreateInspectionScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.EditInspection.route + "?id={id}",
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.LongType
+                    nullable = false
+                }
+            )
+
+        ) { entry ->
+            entry.arguments?.getLong("id")
+                ?.let { EditInspectionScreen(navController = navController, inspectionId = it) }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.itanoji.carvision.ui.inspection.createInspection
+package com.itanoji.carvision.ui.inspection.edit
 
 import android.Manifest
 import android.app.Activity
@@ -8,7 +8,6 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -16,10 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,23 +28,21 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.itanoji.carvision.R
-import com.itanoji.carvision.ui.theme.BlueOnPrimary
-import com.itanoji.carvision.ui.theme.BluePrimary
+import com.itanoji.carvision.ui.inspection.view.InspectionDetailViewModel
 import org.koin.androidx.compose.getViewModel
 import java.io.File
-import java.nio.file.Files.exists
 import java.util.UUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateInspectionScreen(
+fun EditInspectionScreen(
     navController: NavController,
-    viewModel: CreateInspectionViewModel = getViewModel()
+    inspectionId: Long,
+    viewModel: EditInspectionViewModel = getViewModel()
 ) {
-    val title       by viewModel.title.collectAsState()
-    val comment     by viewModel.comment.collectAsState()
-    val previewFile by viewModel.previewFile.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+
     val context = LocalContext.current
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -113,7 +107,7 @@ fun CreateInspectionScreen(
 
     // Следим за событием создания, чтобы навигировать назад
     LaunchedEffect(Unit) {
-        viewModel.created.collect {
+        viewModel.updated.collect {
             navController.popBackStack()
         }
     }
@@ -121,7 +115,7 @@ fun CreateInspectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Новый осмотр") },
+                title = { Text("Редактирование") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -131,15 +125,15 @@ fun CreateInspectionScreen(
         },
         bottomBar = {
             Button(
-                onClick = { viewModel.createInspection() },
-                enabled = title.isNotBlank(),
+                onClick = { viewModel.updateInspection() },
+                enabled = uiState.title.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(48.dp),
                 shape = RoundedCornerShape(24.dp)
             ) {
-                Text("Создать")
+                Text("Cохранить")
             }
         },
         modifier = Modifier
@@ -156,7 +150,7 @@ fun CreateInspectionScreen(
         ) {
             // Превью картинки
             AsyncImage(
-                model = previewFile ?: R.drawable.placeholder_car,
+                model = uiState.previewFile ?: R.drawable.placeholder_car,
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp)
@@ -176,7 +170,7 @@ fun CreateInspectionScreen(
             Spacer(Modifier.height(24.dp))
 
             OutlinedTextField(
-                value = title,
+                value = uiState.title,
                 onValueChange = viewModel::onTitleChange,
                 label = { Text("Название осмотра") },
                 modifier = Modifier.fillMaxWidth(),
@@ -186,7 +180,7 @@ fun CreateInspectionScreen(
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = comment,
+                value = uiState.comment ?: "",
                 onValueChange = viewModel::onCommentChange,
                 label = { Text("Комментарий") },
                 modifier = Modifier

@@ -4,7 +4,6 @@ import com.itanoji.carvision.domain.model.Inspection
 import com.itanoji.carvision.domain.model.InspectionResult
 import com.itanoji.carvision.domain.model.Media
 import kotlinx.coroutines.flow.Flow
-import java.util.*
 
 interface InspectionRepository {
     /**
@@ -42,9 +41,14 @@ interface InspectionRepository {
     fun getMediaForResult(resultId: Long): Flow<List<Media>>
 
     /**
-     * Сохранить медия
+     * Создать медия
      */
-    suspend fun saveMedia(media: Media): Long
+    suspend fun insertMedia(media: Media): Long
+
+    /**
+     * Обновить медиа
+     */
+    suspend fun updateMedia(media: Media)
 
     /**
      * Получить медиа по идентификатору

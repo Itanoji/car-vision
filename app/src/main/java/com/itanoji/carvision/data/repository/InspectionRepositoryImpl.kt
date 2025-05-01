@@ -53,9 +53,14 @@ class InspectionRepositoryImpl(
             list.map { it.toDomain() }
         }
 
-    override suspend fun saveMedia(media: Media): Long {
+    override suspend fun insertMedia(media: Media): Long {
         val entity = media.toEntity()
         return mediaDao.insert(entity)
+    }
+
+    override suspend fun updateMedia(media: Media) {
+        val entity = media.toEntity()
+        mediaDao.update(entity)
     }
 
     override fun getMediaById(mediaId: Long): Flow<Media> =

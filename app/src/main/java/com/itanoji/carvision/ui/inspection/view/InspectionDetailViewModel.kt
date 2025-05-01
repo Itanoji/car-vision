@@ -1,6 +1,5 @@
-package com.itanoji.carvision.ui.inspection.inscpetionDetail
+package com.itanoji.carvision.ui.inspection.view
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,17 +27,15 @@ class InspectionDetailViewModel(
     private val _uiState = MutableStateFlow(InspectionDetailUiState())
     val uiState: StateFlow<InspectionDetailUiState> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            val insp = repository.getInspectionById(inspectionId).first()
-            if (insp != null) {
-                _uiState.update { it.copy(
-                    inspection = insp,
-                    title = insp.title,
-                    comment = insp.description,
-                    previewFile = insp.avatarMediaId?.let{getAvatarFile(insp.avatarMediaId)}
-                ) }
-            }
+    suspend fun loadData() {
+        val insp = repository.getInspectionById(inspectionId).first()
+        if (insp != null) {
+            _uiState.update { it.copy(
+                inspection = insp,
+                title = insp.title,
+                comment = insp.description,
+                previewFile = insp.avatarMediaId?.let{getAvatarFile(insp.avatarMediaId)}
+            ) }
         }
     }
 

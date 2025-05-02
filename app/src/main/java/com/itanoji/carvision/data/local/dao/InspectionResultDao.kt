@@ -10,8 +10,11 @@ interface InspectionResultDao {
     @Query("SELECT * FROM inspection_results WHERE inspection_id = :inspId")
     fun getByInspectionId(inspId: Long): Flow<InspectionResultEntity?>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(res: InspectionResultEntity)
+    @Query("SELECT * FROM inspection_results WHERE inspection_result_id = :inspResultId")
+    fun getByInspectionResultId(inspResultId: Long): Flow<InspectionResultEntity?>
+
+    @Insert()
+    suspend fun insert(res: InspectionResultEntity): Long
 
     @Delete
     suspend fun delete(res: InspectionResultEntity)

@@ -72,7 +72,7 @@ fun InspectionDetailScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.navigate(Screen.InspectionsList.route) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -84,23 +84,27 @@ fun InspectionDetailScreen(
             )
         },
         bottomBar = {
-            // Оставляем кнопку «Начать осмотр», если ещё не проводили
-            if (uiState.inspection?.inspectionResultId == null) {
-                Button(
-                    onClick = { viewModel.startInspection(navController) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.placeholder_car),
-                        contentDescription = null
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Начать осмотр")
-                }
+            val hasResult = uiState.inspection?.inspectionResultId != null
+            Button(
+                onClick = {
+                    if (hasResult) {
+                        navController.navigate("${Screen.InspectionResult.route}?id=${uiState.inspection!!.inspectionResultId}")
+                    } else {
+                        viewModel.startInspection(navController)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.placeholder_car),
+                    contentDescription = null
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(if (hasResult) "Результаты осмотра" else "Начать осмотр")
             }
         },
         modifier = Modifier.navigationBarsPadding()

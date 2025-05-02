@@ -1,9 +1,10 @@
-package com.itanoji.carvision.ui.inspection.view
+package com.itanoji.carvision.ui.inspection_result
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.itanoji.carvision.R
 import com.itanoji.carvision.data.storage.FileStorageManager
 import com.itanoji.carvision.domain.model.Inspection
 import com.itanoji.carvision.domain.repository.InspectionRepository
@@ -18,30 +19,25 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 
-class InspectionDetailViewModel(
+class InspectionResultViewModel(
     private val repository: InspectionRepository,
     private val fileStorage: FileStorageManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val inspectionId: Long = checkNotNull(savedStateHandle["id"])
+    private val inspectionResultId: Long = checkNotNull(savedStateHandle["id"])
 
-    private val _uiState = MutableStateFlow(InspectionDetailUiState())
-    val uiState: StateFlow<InspectionDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(InspectionResultUiState())
+    val uiState: StateFlow<InspectionResultUiState> = _uiState.asStateFlow()
 
-    suspend fun loadData() {
-        val insp = repository.getInspectionById(inspectionId).first()
-        if (insp != null) {
-            _uiState.update { it.copy(
-                inspection = insp,
-                title = insp.title,
-                comment = insp.description,
-                previewFile = insp.avatarMediaId?.let{getAvatarFile(insp.avatarMediaId)}
-            ) }
+    init {
+        viewModelScope.launch {
+            val res = repository.getInspectionResultById(inspectionResultId).first()
+            if (res != null) {
+                _uiState.update { it.copy(
+                    inspectionId = res.inspectionId
+                ) }
+            }
         }
-    }
-
-    fun startInspection(navController: NavController) {
-        navController.navigate("${Screen.Camera.route}?id=$inspectionId")
     }
 
     /**
@@ -54,10 +50,12 @@ class InspectionDetailViewModel(
     }
 }
 
-data class InspectionDetailUiState(
-    val inspection: Inspection? = null,
-    val title: String = "",
-    val comment: String? = null,
-    val previewFile: File? = null
+data class InspectionResultUiState(
+    val inspectionId: Long = 0L,
+    val licensePlate: String = "B964EX197",
+    val color: String = "синий",
+    val brand: String = "BMW",
+    val scratchImageIds: List<Int> = listOf(R.drawable.mock_scratch_1, R.drawable.mock_scratch_2),
+    val dentImageIds: List<Int> = listOf(R.drawable.mock_dent_1, R.drawable.mock_dent_2, R.drawable.mock_dent_1, R.drawable.mock_dent_3)
 )
 

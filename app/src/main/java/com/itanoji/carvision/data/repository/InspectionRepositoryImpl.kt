@@ -43,9 +43,13 @@ class InspectionRepositoryImpl(
     override fun getResultForInspection(id: Long): Flow<InspectionResult?> =
         resultDao.getByInspectionId(id).mapNotNull { it?.toDomain() }
 
-    override suspend fun saveInspectionResult(result: InspectionResult) {
+    override fun getInspectionResultById(id: Long): Flow<InspectionResult?> {
+        return resultDao.getByInspectionResultId(id).mapNotNull { it?.toDomain() }
+    }
+
+    override suspend fun saveInspectionResult(result: InspectionResult): Long {
         val entity = result.toEntity()
-        resultDao.insert(entity)
+        return resultDao.insert(entity)
     }
 
     override fun getMediaForResult(resultId: Long): Flow<List<Media>> =

@@ -30,10 +30,12 @@ interface InspectionRepository {
      */
     fun getResultForInspection(id: Long): Flow<InspectionResult?>
 
+    fun getInspectionResultById(id: Long): Flow<InspectionResult?>
+
     /**
      * Сохранить результат осмотра
      */
-    suspend fun saveInspectionResult(result: InspectionResult)
+    suspend fun saveInspectionResult(result: InspectionResult): Long
 
     /**
      * Получить список медиа для результата осмотра
